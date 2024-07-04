@@ -35,6 +35,7 @@
     "express": "^4.19.2",
     "gotify": "^1.1.0",
     "matrix-js-sdk": "^32.3.0",
+    "ms-teams-webhook": "^2.1.0",
     "node-pushover": "^1.0.0",
     "ntfy": "^1.5.3",
     "pushbullet": "^3.0.0",

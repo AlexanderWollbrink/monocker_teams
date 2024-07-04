@@ -3,6 +3,7 @@ import Docker from "dockerode";
 import { createRequire } from "module";
 const pjson = createRequire(import.meta.url)("./package.json");
 import PushBullet from "pushbullet";
+import { IncomingWebhook } from "ms-teams-webhook";
 import Pushover from 'node-pushover';
 import { Webhook } from 'discord-webhook-node';
 import { NtfyClient } from 'ntfy';
@@ -61,7 +62,7 @@ let docker = new Docker({socketPath: '/var/run/docker.sock'});
 const NODE_ENV = process.env.NODE_ENV || "production";
 const SERVER_LABEL = process.env.SERVER_LABEL || "";
 const SERVER_AVATAR = process.env.SERVER_AVATAR || "";
-const MESSAGE_PLATFORM = process.env.MESSAGE_PLATFORM || "";
+const MESSAGE_PLATFORM = process.env.MESSAGE_PLATFORM || "teams@https://fraunhofer.webhook.office.com/webhookb2/da991eac-d40a-4931-9329-915ad0731c5b@f930300c-c97d-4019-be03-add650a171c4/IncomingWebhook/99026a0a4abc4cb3aa3fe6764944a2e7/600d9646-bcfd-4185-875f-2186c8330a53";
 const LABEL_ENABLE = process.env.LABEL_ENABLE || 'false';
 const ONLY_OFFLINE_STATES = process.env.ONLY_OFFLINE_STATES || 'false';
 const EXCLUDE_EXITED = process.env.EXCLUDE_EXITED || 'false';
@@ -166,6 +167,32 @@ async function sendDiscord(title, message) {
         }
     } catch (e) {
         console.error("** Discord Exception: " + e.message);
+    }
+}
+
+async function sendTeams(title, message) {
+    console.log(msgDetails[1] + msgDetails[2])
+    console.log(message)
+    try {
+        const webhook = new IncomingWebhook(msgDetails[1] + "@" + msgDetails[2]);
+        await webhook.send({
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            summary: "Monitoring Report",
+            themeColor: "0078D7",
+            title: title,
+            sections: [
+              {
+                activityTitle: "Docker Monitoring",
+                activitySubtitle: new Date().toLocaleString("de-DE"),
+                activityImage:
+                  "https://connectorsdemo.azurewebsites.net/images/MSC12_Oscar_002.jpg",
+                text: message,
+              },
+            ],
+          });
+    } catch (e) {
+        console.error("** Teams Exception: " + e.message);
     }
 }
 
@@ -286,6 +313,9 @@ async function send(message, extTitle) {
         case "discord":
             sendDiscord(title, message);
             break;
+        case "teams":
+                sendTeams(title, message);
+                break;
         case "ntfy":
             if (NTFY_PASS.length == 0) sendNtfy(title, message);
             else sendNtfyAuth(title, message);
